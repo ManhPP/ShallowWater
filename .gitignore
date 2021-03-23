@@ -303,3 +303,4 @@ Thumbs.db #thumbnail cache on Windows
 # End of https://www.toptal.com/developers/gitignore/api/c++,vscode,python,pycharm+all,git
 .history/*
 .DS_Store
+.vscode

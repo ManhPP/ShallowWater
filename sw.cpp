@@ -16,6 +16,8 @@
 #define H2 2660
 #define D 4400000
 
+using namespace std;
+
 void calDerivateU(float* U, float *dU, float* V, float* H); // ham tinh dao ham cua U theo t
 void calDerivateV(float* V, float *dV, float* U, float* H); // ham tinh dao ham cua V theo t
 void calDerivateH(float* H, float *dH, float* U, float* V); // ham tinh dao ham cua H theo t
@@ -31,6 +33,15 @@ int main(){
     float *U, *V, *H;
     float *dU, *dV, *dH;
     float t = 0;
+    
+    U= (float *) malloc ((nx*ny)*sizeof(float));
+    V= (float *) malloc ((nx*ny)*sizeof(float));
+    H= (float *) malloc ((nx*ny)*sizeof(float));
+
+    dU= (float *) malloc ((nx*ny)*sizeof(float));
+    dV= (float *) malloc ((nx*ny)*sizeof(float));
+    dH= (float *) malloc ((nx*ny)*sizeof(float));
+
 
     init(U, V, H);
     writeResult(U, V, H);
@@ -151,4 +162,8 @@ void init(float *U, float *V, float *H){
             *(V + i*ny + j) = -Hx/f;
         }
     }
+}
+
+void writeResult(float *U, float *V, float *H){
+
 }
