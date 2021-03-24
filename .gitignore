@@ -305,3 +305,4 @@ Thumbs.db #thumbnail cache on Windows
 .DS_Store
 .vscode
 sw.dSYM/Contents/*
+output*.txt
