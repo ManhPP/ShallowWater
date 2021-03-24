@@ -2,6 +2,7 @@
 #include<math.h>
 #include <fstream>
 #include <iomanip>
+
 #define PI 3.14159265
 
 #define g 9.8
@@ -116,7 +117,6 @@ void init(float *U, float *V, float *H){
 
             Hx = (Hr - Hc)/hx;
             Hy = (Hd - Hc)/hy;
-            cout << setprecision(15) << Hy;
             *(U + i*ny + j) = -Hy/f;
             *(V + i*ny + j) = -Hx/f;
         }
