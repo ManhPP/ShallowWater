@@ -67,7 +67,7 @@ int main(){
             writeResult(U, V, H, t);
         }
     }
-
+    writeResult(U, V, H, t);
     return 0;
 }
 
@@ -78,24 +78,24 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
 
             //U
             Uc = *(U + i*nx + j);
-            Ur = (i==ny-1) ? 0 : *(U + (i+1)*nx + j);
-            Ud = (j==nx-1) ? *(U + j) : *(U + i*nx + j+1);
+            Ud = (i==ny-1) ? 0 : *(U + (i+1)*nx + j);
+            Ur = (j==nx-1) ? *(U + j) : *(U + i*nx + j+1);
 
             Ux = (Ur - Uc)/hx;
             Uy = (Ud - Uc)/hy;
 
             //V
             Vc = *(V + i*nx + j);
-            Vr = (i==ny-1) ? 0 : *(V + (i+1)*nx + j);
-            Vd = (j==nx-1) ? *(V + j) : *(V + i*nx + j+1);
+            Vd = (i==ny-1) ? 0 : *(V + (i+1)*nx + j);
+            Vr = (j==nx-1) ? *(V + j) : *(V + i*nx + j+1);
 
             Vx = (Vr - Vc)/hx;
             Vy = (Vd - Vc)/hy;
 
             //H
             Hc = *(H + i*nx + j);
-            Hr = (i==ny-1) ? 0 : *(H + (i+1)*nx + j);
-            Hd = (j==nx-1) ? *(H + j) : *(H + i*nx + j+1);
+            Hd = (i==ny-1) ? 0 : *(H + (i+1)*nx + j);
+            Hr = (j==nx-1) ? *(H + j) : *(H + i*nx + j+1);
 
             Hx = (Hr - Hc)/hx;
             Hy = (Hd - Hc)/hy;
@@ -103,10 +103,8 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
             *(dU + i*nx + j) = f*Vc - Uc*Ux - Vc*Uy - g*Hx;
             *(dV + i*nx + j) = -f*Uc - Uc*Vx - Vc*Vy - g*Hy;
             *(dH + i*nx + j) = -Uc*Hx - Hc*Ux - Vc*Hy - Hc*Vy;
-            cout<< endl;
         }
     }
-    cout<< endl;
 }
 
 void init(float *U, float *V, float *H){
@@ -120,8 +118,8 @@ void init(float *U, float *V, float *H){
     for (int i = 0; i < ny; i++){
         for (int j = 0; j < nx; j++){
             Hc = *(H + i*nx + j);
-            Hr = (i==ny-1) ? 0 : *(H + (i+1)*nx + j);
-            Hd = (j==nx-1) ? *(H + j) : *(H + i*nx + j+1);
+            Hd = (i==ny-1) ? 0 : *(H + (i+1)*nx + j);
+            Hr = (j==nx-1) ? *(H + j) : *(H + i*nx + j+1);
 
             Hx = (Hr - Hc)/hx;
             Hy = (Hd - Hc)/hy;
