@@ -1,7 +1,7 @@
 #include<iostream>
 #include<math.h>
 #include <fstream>
-
+#include <iomanip>
 #define PI 3.14159265
 
 #define g 9.8
@@ -102,10 +102,9 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
 
 void init(float *U, float *V, float *H){
     float Hc, Hd, Hr, Hx, Hy;
-
     for (int i = 0; i < nx; i++){
         for (int j = 0; j < ny; j++){
-            *(H + i*ny + j) = H0 + H1 * tan(9.0f*(j*hy - 6*hx)/(2*D)) + H2 * sin(2 * PI * i * hx)/pow(cos((9.0f*j*hy - 6*hx)/D), 2);
+            *(H + i*ny + j) = H0 + H1 * tan(9.0f*(j*hy - 6*hx)/((float)2*D)) + H2 * sin(2 * PI * i * hx)/pow(cos((9.0f*j*hy - 6*hx)/(float)D), 2);
         }
     }
 
@@ -117,7 +116,7 @@ void init(float *U, float *V, float *H){
 
             Hx = (Hr - Hc)/hx;
             Hy = (Hd - Hc)/hy;
-
+            cout << setprecision(15) << Hy;
             *(U + i*ny + j) = -Hy/f;
             *(V + i*ny + j) = -Hx/f;
         }
@@ -128,6 +127,8 @@ void writeResult(float *U, float *V, float *H, float t){
     fstream output;
 	output.open("outputU.txt", ios::app);
     output <<"time: " << t << endl;
+    output << setprecision(16);
+
     for (int i = 0; i < nx; i++){
         for (int j = 0; j < ny; j++){
             output<<*(U + i*ny + j) << " ";
@@ -138,6 +139,8 @@ void writeResult(float *U, float *V, float *H, float t){
 
     output.open("outputV.txt", ios::app);
     output <<"time: " << t << endl;
+    output << setprecision(16);
+
     for (int i = 0; i < nx; i++){
         for (int j = 0; j < ny; j++){
             output<<*(V + i*ny + j) << " ";
@@ -148,6 +151,8 @@ void writeResult(float *U, float *V, float *H, float t){
 
     output.open("outputH.txt", ios::app);
     output <<"time: " << t << endl;
+    output << setprecision(16);
+
     for (int i = 0; i < nx; i++){
         for (int j = 0; j < ny; j++){
             output<<*(H + i*ny + j) << " ";
