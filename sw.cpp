@@ -1,20 +1,21 @@
 #include<iostream>
 #include<math.h>
+#include <fstream>
 
 #define PI 3.14159265
 
 #define g 9.8
 #define f 0.1
 #define L 10
-#define hx 1
-#define hy 1
-#define T 2
+#define hx 1.0
+#define hy 1.0
+#define T 2.0
 #define dt 0.01
 
-#define H0 20000
-#define H1 4400
-#define H2 2660
-#define D 4400000
+#define H0 20000.0
+#define H1 4400.0
+#define H2 2660.0
+#define D 4400000.0
 
 using namespace std;
 
@@ -22,7 +23,7 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH);
 
 void init(float *U, float *V, float *H); // ham khoi tao
 
-void writeResult(float *U, float *V, float *H); // ham ghi ket qua ra file
+void writeResult(float *U, float *V, float *H, float t); // ham ghi ket qua ra file
 
 int nx = L/hx;
 int ny = L/hy;
@@ -42,7 +43,7 @@ int main(){
 
 
     init(U, V, H);
-    writeResult(U, V, H);
+    writeResult(U, V, H, 0);
 
     while (t <= T)
     {
@@ -59,7 +60,7 @@ int main(){
         t += dt;
     }
 
-    writeResult(U, V, H);
+    writeResult(U, V, H, T);
     return 0;
 }
 
@@ -101,10 +102,10 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
 
 void init(float *U, float *V, float *H){
     float Hc, Hd, Hr, Hx, Hy;
-    
+
     for (int i = 0; i < nx; i++){
         for (int j = 0; j < ny; j++){
-            *(H + i*ny + j) = H0 + H1 * tan(9*(j*hy - 6*hx)/(2*D)) + H2 * sin(2 * PI * i * hx)/pow((9*j*hy - 6*hx)/D, 2);
+            *(H + i*ny + j) = H0 + H1 * tan(9.0f*(j*hy - 6*hx)/(2*D)) + H2 * sin(2 * PI * i * hx)/pow(cos((9.0f*j*hy - 6*hx)/D), 2);
         }
     }
 
@@ -123,6 +124,35 @@ void init(float *U, float *V, float *H){
     }
 }
 
-void writeResult(float *U, float *V, float *H){
+void writeResult(float *U, float *V, float *H, float t){
+    fstream output;
+	output.open("outputU.txt", ios::app);
+    output <<"time: " << t << endl;
+    for (int i = 0; i < nx; i++){
+        for (int j = 0; j < ny; j++){
+            output<<*(U + i*ny + j) << " ";
+        }
+        output<<endl;
+    }
+    output.close();
 
+    output.open("outputV.txt", ios::app);
+    output <<"time: " << t << endl;
+    for (int i = 0; i < nx; i++){
+        for (int j = 0; j < ny; j++){
+            output<<*(V + i*ny + j) << " ";
+        }
+        output<<endl;
+    }
+    output.close();
+
+    output.open("outputH.txt", ios::app);
+    output <<"time: " << t << endl;
+    for (int i = 0; i < nx; i++){
+        for (int j = 0; j < ny; j++){
+            output<<*(H + i*ny + j) << " ";
+        }
+        output<<endl;
+    }
+    output.close();
 }

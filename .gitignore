@@ -304,3 +304,4 @@ Thumbs.db #thumbnail cache on Windows
 .history/*
 .DS_Store
 .vscode
+sw.dSYM/Contents/*
