@@ -109,7 +109,9 @@ void init(float *U, float *V, float *H){
     float Hc, Hd, Hr, Hx, Hy;
     for (int i = 0; i < ny; i++){
         for (int j = 0; j < nx; j++){
-            *(H + i*nx + j) = H0 + H1 * tan(9.0f*(j*hy - 6*hx)/((float)2*D)) + H2 * sin(2 * PI * i * hx)/pow(cos((9.0f*j*hy - 6*hx)/(float)D), 2);
+            *(H + i*nx + j) = H0 
+                            + H1 * tan(9.0f*(i*hy - 6*hx)/((float)2*D)) 
+                            + H2 * sin(2 * PI * j * hx)/pow(cos((9.0f*i*hy - 6*hx)/(float)D), 2);
         }
     }
 
