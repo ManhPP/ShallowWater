@@ -11,7 +11,7 @@
 #define L 10
 #define hx 1.0
 #define hy 1.0
-#define T 2.0
+#define T 1.0
 #define dt 0.1
 
 #define H0 20000.0
@@ -63,9 +63,7 @@ int main(){
         }
 
         t += dt;
-        if (t < 4*dt){
-            writeResult(U, V, H, t);
-        }
+        writeResult(U, V, H, t);
     }
     writeResult(U, V, H, t);
     return 0;
@@ -79,7 +77,7 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
             //U
             Uc = *(U + i*nx + j);
             Ud = (i==ny-1) ? 0 : *(U + (i+1)*nx + j);
-            Ur = (j==nx-1) ? *(U + j) : *(U + i*nx + j+1);
+            Ur = (j==nx-1) ? *(U + i*nx) : *(U + i*nx + j+1);
 
             Ux = (Ur - Uc)/hx;
             Uy = (Ud - Uc)/hy;
@@ -87,7 +85,7 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
             //V
             Vc = *(V + i*nx + j);
             Vd = (i==ny-1) ? 0 : *(V + (i+1)*nx + j);
-            Vr = (j==nx-1) ? *(V + j) : *(V + i*nx + j+1);
+            Vr = (j==nx-1) ? *(V + i*nx) : *(V + i*nx + j+1);
 
             Vx = (Vr - Vc)/hx;
             Vy = (Vd - Vc)/hy;
@@ -95,7 +93,7 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
             //H
             Hc = *(H + i*nx + j);
             Hd = (i==ny-1) ? 0 : *(H + (i+1)*nx + j);
-            Hr = (j==nx-1) ? *(H + j) : *(H + i*nx + j+1);
+            Hr = (j==nx-1) ? *(H + i*nx) : *(H + i*nx + j+1);
 
             Hx = (Hr - Hc)/hx;
             Hy = (Hd - Hc)/hy;
@@ -119,7 +117,7 @@ void init(float *U, float *V, float *H){
         for (int j = 0; j < nx; j++){
             Hc = *(H + i*nx + j);
             Hd = (i==ny-1) ? 0 : *(H + (i+1)*nx + j);
-            Hr = (j==nx-1) ? *(H + j) : *(H + i*nx + j+1);
+            Hr = (j==nx-1) ? *(H + i*nx) : *(H + i*nx + j+1);
 
             Hx = (Hr - Hc)/hx;
             Hy = (Hd - Hc)/hy;
