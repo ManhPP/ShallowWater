@@ -51,9 +51,9 @@ int main(){
     dV= (float *) malloc ((nx*ny)*sizeof(float));
     dH= (float *) malloc ((nx*ny)*sizeof(float));
 
-    remove("outputU1.txt");
-    remove("outputV1.txt");
-    remove("outputH1.txt");
+    remove("outputU.txt");
+    remove("outputV.txt");
+    remove("outputH.txt");
 
     init(U, V, H);
     writeResult(U, V, H, t);
@@ -84,15 +84,15 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
             for (int i = 0; i < nx; i++){
             Uc = value(U, i ,j);
             Ur = (i == nx-1) ? value(U, 0, j) : value(U, i+1, j);
-            Ud = (j == ny-1) ? 0 : value(U, i, j+1);
+            Ud = (j == ny-1) ? 0.0 : value(U, i, j+1);
 
             Vc = value(V, i,j);
             Vr = (i == nx-1) ? value(V, 0, j) : value(V, i+1, j);
-            Vd = (j == ny-1) ? 0 : value(V, i, j+1);
+            Vd = (j == ny-1) ? 0.0 : value(V, i, j+1);
 
             Hc = value(H, i, j);
             Hr = (i == nx-1) ? value(H, 0, j) : value(H, i+1, j);
-            Hd = (j == ny-1) ? 0 : value(H, i, j+1);
+            Hd = (j == ny-1) ? 0.0 : value(H, i, j+1);
 
             Ux = (Ur - Uc)/hx;
             Uy = (Ud - Uc)/hy;
@@ -136,7 +136,7 @@ void init(float *U, float *V, float *H){
 
 void writeResult(float *U, float *V, float *H, float t){
     fstream output;
-	output.open("outputU1.txt", ios::app);
+	output.open("outputU.txt", ios::app);
     output <<"time: " << t << endl;
     output << setprecision(16);
 
@@ -148,7 +148,7 @@ void writeResult(float *U, float *V, float *H, float t){
     }
     output.close();
 
-    output.open("outputV1.txt", ios::app);
+    output.open("outputV.txt", ios::app);
     output <<"time: " << t << endl;
     output << setprecision(16);
 
@@ -160,7 +160,7 @@ void writeResult(float *U, float *V, float *H, float t){
     }
     output.close();
 
-    output.open("outputH1.txt", ios::app);
+    output.open("outputH.txt", ios::app);
     output <<"time: " << t << endl;
     output << setprecision(16);
 
