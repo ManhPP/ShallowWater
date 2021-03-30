@@ -9,10 +9,10 @@
 #define g 9.8f
 #define f 0.1f
 #define L 10.0f
-#define hx 5.0f
-#define hy 5.0f
+#define hx 0.1f
+#define hy 0.1f
 #define T 1.0f
-#define dt 0.5f
+#define dt 0.1f
 
 #define H0 20000.0f
 #define H1 4400.0f
