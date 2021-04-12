@@ -8,10 +8,10 @@
 
 #define g 1.0f
 #define f 0.1f
-#define L 10.0f
+#define L 100.0f
 #define hx 1.0f
 #define hy 1.0f
-#define T 1.0f
+#define T 10.0f
 #define dt 0.01f
 #define H0 20000.0f
 #define H1 4400.0f
@@ -135,7 +135,7 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
 
             *(dU + index(i, j)) = - g * Hx;
             *(dV + index(i, j)) = - g * Hy;
-            *(dH + index(i, j)) = - (Ux + Vy);
+            *(dH + index(i, j)) = - (Ux * value(H, i, j) + Hx * value(U, i, j) + Vy * value(H, i, j) + Hy * value(V, i, j)) ;
         }
     }
 }
