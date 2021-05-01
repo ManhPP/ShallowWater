@@ -1,8 +1,8 @@
-#include<iostream>
-#include<math.h>
+#include <iostream>
+#include <math.h>
 #include <fstream>
-#include <iomanip>
 #include <cstdio>
+#include <iomanip>
 
 #define PI 3.14159265f
 
@@ -158,7 +158,7 @@ void init(float *U, float *V, float *H){
 }
 
 void writeResult(float *U, float *V, float *H, float t){
-    fstream output;
+    std::fstream output;
 	output.open("outputU.txt", ios::app);
     output <<"time: " << t << endl;
     output << setprecision(16);

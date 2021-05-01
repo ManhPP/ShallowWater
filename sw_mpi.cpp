@@ -131,44 +131,44 @@ void init(float *U, float *V, float *H){
     }
 }
 
-// void writeResult(float *U, float *V, float *H, float t){
-//     fstream output;
-// 	output.open("outputU.txt", ios::app);
-//     output <<"time: " << t << endl;
-//     output << setprecision(16);
+void writeResult(float *U, float *V, float *H, float t){
+    fstream output;
+	output.open("outputU_mpi.txt", ios::app);
+    output <<"time: " << t << endl;
+    output << setprecision(16);
 
-//     for (int j = 0; j < ny; j++){
-//             for (int i = 0; i < nx; i++){
-//             output<<value(U, i, j) << " ";
-//         }
-//         output<<endl;
-//     }
-//     output.close();
+    for (int j = 0; j < ny; j++){
+            for (int i = 0; i < nx; i++){
+            output<<value(U, i, j) << " ";
+        }
+        output<<endl;
+    }
+    output.close();
 
-//     output.open("outputV.txt", ios::app);
-//     output <<"time: " << t << endl;
-//     output << setprecision(16);
+    output.open("outputV_mpi.txt", ios::app);
+    output <<"time: " << t << endl;
+    output << setprecision(16);
 
-//     for (int j = 0; j < ny; j++){
-//             for (int i = 0; i < nx; i++){
-//             output<<value(V, i, j) << " ";
-//         }
-//         output<<endl;
-//     }
-//     output.close();
+    for (int j = 0; j < ny; j++){
+            for (int i = 0; i < nx; i++){
+            output<<value(V, i, j) << " ";
+        }
+        output<<endl;
+    }
+    output.close();
 
-//     output.open("outputH.txt", ios::app);
-//     output <<"time: " << t << endl;
-//     output << setprecision(16);
+    output.open("outputH_mpi.txt", ios::app);
+    output <<"time: " << t << endl;
+    output << setprecision(16);
 
-//     for (int j = 0; j < ny; j++){
-//             for (int i = 0; i < nx; i++){
-//             output<<value(H, i, j) << " ";
-//         }
-//         output<<endl;
-//     }
-//     output.close();
-// } // ham ghi ket qua ra file
+    for (int j = 0; j < ny; j++){
+            for (int i = 0; i < nx; i++){
+            output<<value(H, i, j) << " ";
+        }
+        output<<endl;
+    }
+    output.close();
+} // ham ghi ket qua ra file
 
 int main(int argc, char** argv) {
 	int id;
@@ -181,7 +181,6 @@ int main(int argc, char** argv) {
 	int left, right;
 	int avgnum, extra, offset;
 	int numele;
-	int Ntime;
 	MPI_Status status;
 
 	U = (float *) malloc ((nx*ny)*sizeof(float));
@@ -222,17 +221,26 @@ int main(int argc, char** argv) {
 			offset = offset + numele;
 		}
 
-		for (i = 1; i <= numworkers; i++) {
-			src = i;
-			MPI_Recv(&offset, 1, MPI_INT, src, DONE, MPI_COMM_WORLD, &status);
-			MPI_Recv(&numele, 1, MPI_INT, src, DONE, MPI_COMM_WORLD, &status);
-			MPI_Recv(&U[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
-			MPI_Recv(&V[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
-			MPI_Recv(&H[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
+		float t = 0.0;
+		int step = 0;
+
+		while(t <= T) {
+			for (i = 1; i <= numworkers; i++) {
+				src = i;
+				MPI_Recv(&offset, 1, MPI_INT, src, DONE, MPI_COMM_WORLD, &status);
+				MPI_Recv(&numele, 1, MPI_INT, src, DONE, MPI_COMM_WORLD, &status);
+				MPI_Recv(&U[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
+				MPI_Recv(&V[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
+				MPI_Recv(&H[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
+			}
+
+			t += dt;
+			step++;
+
+			if(step % 10 == 0)
+				writeResult(U, V, H, t); // currently write only last result
 		}
-
-		// writeResult(U, V, H, 0); // currently write only last result
-
+		
 		MPI_Finalize();
 	}
 
@@ -250,8 +258,8 @@ int main(int argc, char** argv) {
 		//printf("id = %d, offset = %d, numele = %d, left = %d, right = %d\n", id, offset, numele, left, right);
 		//display(C, offset, offset + (int)numele/n);
 
-		Ntime = T / dt;
-		for (it = 0; it < Ntime; it++) {
+		float t = 0.0;
+		while(t <= T) {
 			if (left != NONE) {
 				MPI_Send(&U[offset], ny, MPI_FLOAT, left, RTAG, MPI_COMM_WORLD);
 				MPI_Send(&V[offset], ny, MPI_FLOAT, left, RTAG, MPI_COMM_WORLD);
@@ -287,13 +295,21 @@ int main(int argc, char** argv) {
 			}
 
 			update(U, V, H, dU, dV, dH, offset/ny, (int)((offset + numele)/ny));
+
+			MPI_Send(&offset, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
+			MPI_Send(&numele, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
+			MPI_Send(&U[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
+			MPI_Send(&V[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
+			MPI_Send(&H[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
+
+			t += dt;
 		}
 
-		MPI_Send(&offset, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
-		MPI_Send(&numele, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
-		MPI_Send(&U[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
-		MPI_Send(&V[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
-		MPI_Send(&H[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
+		// MPI_Send(&offset, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
+		// MPI_Send(&numele, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
+		// MPI_Send(&U[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
+		// MPI_Send(&V[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
+		// MPI_Send(&H[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
 
 		MPI_Finalize();
 	}
