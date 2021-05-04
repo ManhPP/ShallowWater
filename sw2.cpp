@@ -11,7 +11,7 @@
 #define L 100.0f
 #define hx 1.0f
 #define hy 1.0f
-#define T 10.0f
+#define T 1000.0f
 #define dt 0.01f
 #define H0 20000.0f
 #define H1 4400.0f
@@ -159,7 +159,7 @@ void init(float *U, float *V, float *H){
 
 void writeResult(float *U, float *V, float *H, float t){
     std::fstream output;
-	output.open("outputU.txt", ios::app);
+	output.open("result/outputU.txt", ios::app);
     output <<"time: " << t << endl;
     output << setprecision(16);
 
@@ -171,7 +171,7 @@ void writeResult(float *U, float *V, float *H, float t){
     }
     output.close();
 
-    output.open("outputV.txt", ios::app);
+    output.open("result/outputV.txt", ios::app);
     output <<"time: " << t << endl;
     output << setprecision(16);
 
@@ -182,8 +182,8 @@ void writeResult(float *U, float *V, float *H, float t){
         output<<endl;
     }
     output.close();
-
-    output.open("outputH.txt", ios::app);
+    string h_file = "result/outputH_" + to_string((int)round(t/dt)) + ".txt";
+    output.open(h_file, ios::app);
     output <<"time: " << t << endl;
     output << setprecision(16);
 

@@ -306,3 +306,4 @@ Thumbs.db #thumbnail cache on Windows
 .vscode
 sw.dSYM/Contents/*
 output*.txt
+*.png
