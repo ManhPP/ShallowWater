@@ -11,8 +11,8 @@
 #define L 100.0f
 #define hx 1.0f
 #define hy 1.0f
-#define T 1000.0f
-#define dt 0.01f
+#define T 100.0
+#define dt 0.01
 #define H0 20000.0f
 #define H1 4400.0f
 #define H2 2660.0f
@@ -70,9 +70,11 @@ int main(){
         }
 
         t += dt;
-        step ++;
-        if(step % 10 == 0)
-            writeResult(U, V, H, t);
+        // step ++;
+        // if(step % 10 == 0)
+        writeResult(U, V, H, t);
+
+        cout << t << '\n';
     }
     writeResult(U, V, H, t);
 
@@ -135,7 +137,7 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
 
             *(dU + index(i, j)) = - g * Hx;
             *(dV + index(i, j)) = - g * Hy;
-            *(dH + index(i, j)) = - (Ux * value(H, i, j) + Hx * value(U, i, j) + Vy * value(H, i, j) + Hy * value(V, i, j)) ;
+            *(dH + index(i, j)) = - (Ux * value(H, i, j) + Vy * value(H, i, j));
         }
     }
 }
@@ -159,37 +161,40 @@ void init(float *U, float *V, float *H){
 
 void writeResult(float *U, float *V, float *H, float t){
     std::fstream output;
-	output.open("result/outputU.txt", ios::app);
-    output <<"time: " << t << endl;
-    output << setprecision(16);
+	// output.open("result/outputU.txt", ios::app);
+    // output <<"time: " << t << endl;
+    // output << setprecision(32);
 
-    for (int j = 0; j < ny; j++){
-            for (int i = 0; i < nx; i++){
-            output<<value(U, i, j) << " ";
-        }
-        output<<endl;
-    }
-    output.close();
+    // for (int j = 0; j < ny; j++){
+    //         for (int i = 0; i < nx; i++){
+    //         output<<value(U, i, j) << " ";
+    //     }
+    //     output<<endl;
+    // }
+    // output.close();
 
-    output.open("result/outputV.txt", ios::app);
-    output <<"time: " << t << endl;
-    output << setprecision(16);
+    // output.open("result/outputV.txt", ios::app);
+    // output <<"time: " << t << endl;
+    // output << setprecision(32);
 
-    for (int j = 0; j < ny; j++){
-            for (int i = 0; i < nx; i++){
-            output<<value(V, i, j) << " ";
-        }
-        output<<endl;
-    }
-    output.close();
+    // for (int j = 0; j < ny; j++){
+    //         for (int i = 0; i < nx; i++){
+    //         output<<value(V, i, j) << " ";
+    //     }
+    //     output<<endl;
+    // }
+    // output.close();
+
     string h_file = "result/outputH_" + to_string((int)round(t/dt)) + ".txt";
-    output.open(h_file, ios::app);
+    output.open(h_file, ios::out | ios::ate);
     output <<"time: " << t << endl;
-    output << setprecision(16);
+    output << setprecision(32);
 
     for (int j = 0; j < ny; j++){
             for (int i = 0; i < nx; i++){
-            output<<value(H, i, j) << " ";
+                float val = value(H, i, j);
+                // val = max(1.f, min(val, 0.f));
+                output<< val + H0 << " ";
         }
         output<<endl;
     }

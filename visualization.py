@@ -53,7 +53,7 @@ if __name__ == '__main__':
     y = np.asarray([i for i in range(100)])
 
     x, y = np.meshgrid(x, y)
-    for i in range(19007, 19100, 10):
+    for i in range(0, 10000):
         eta = []
         file = open(f"result/outputH_{i}.txt")
         lines = file.readlines()[1:]
@@ -63,6 +63,8 @@ if __name__ == '__main__':
 
         eta = np.asarray(eta)
         eta_list.append(eta)
+
+        print(i)
 
         # surface_plot3d(x, y, eta, f"img/H{i}.png")
     eta_animation3d(x, y, eta_list, 1, "a")

@@ -97,7 +97,8 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH, 
 
             *(dU + index(i, j)) = - g * Hx;
             *(dV + index(i, j)) = - g * Hy;
-            *(dH + index(i, j)) = - (Ux * value(H, i, j) + Hx * value(U, i, j) + Vy * value(H, i, j) + Hy * value(V, i, j)) ;
+            // *(dH + index(i, j)) = - (Ux * value(H, i, j) + Hx * value(U, i, j) + Vy * value(H, i, j) + Hy * value(V, i, j)) ;
+			*(dH + index(i, j)) = - (Ux * value(H, i, j) + Vy * value(H, i, j)) ;
         }
     }
 }
