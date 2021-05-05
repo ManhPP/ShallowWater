@@ -11,7 +11,7 @@
 #define L 100.0f
 #define hx 1.0f
 #define hy 1.0f
-#define T 1000.0f
+#define T 100.0f
 #define dt 0.01f
 #define H0 20000.0f
 #define H1 4400.0f
@@ -147,7 +147,7 @@ void init(float *U, float *V, float *H){
             *(H + index(i, j)) = 1.0;
         }
     }
-    *(H) = 1.1;
+    *(H+index(nx/2, ny/2)) = 1.3;
 
     for (int j = 0; j < ny; j++){
             for (int i = 0; i < nx; i++){
@@ -159,30 +159,31 @@ void init(float *U, float *V, float *H){
 
 void writeResult(float *U, float *V, float *H, float t){
     std::fstream output;
-	output.open("result/outputU.txt", ios::app);
-    output <<"time: " << t << endl;
-    output << setprecision(16);
+	// output.open("result/outputU.txt", ios::app);
+    // output <<"time: " << t << endl;
+    // output << setprecision(16);
 
-    for (int j = 0; j < ny; j++){
-            for (int i = 0; i < nx; i++){
-            output<<value(U, i, j) << " ";
-        }
-        output<<endl;
-    }
-    output.close();
+    // for (int j = 0; j < ny; j++){
+    //         for (int i = 0; i < nx; i++){
+    //         output<<value(U, i, j) << " ";
+    //     }
+    //     output<<endl;
+    // }
+    // output.close();
 
-    output.open("result/outputV.txt", ios::app);
-    output <<"time: " << t << endl;
-    output << setprecision(16);
+    // output.open("result/outputV.txt", ios::app);
+    // output <<"time: " << t << endl;
+    // output << setprecision(16);
 
-    for (int j = 0; j < ny; j++){
-            for (int i = 0; i < nx; i++){
-            output<<value(V, i, j) << " ";
-        }
-        output<<endl;
-    }
-    output.close();
+    // for (int j = 0; j < ny; j++){
+    //         for (int i = 0; i < nx; i++){
+    //         output<<value(V, i, j) << " ";
+    //     }
+    //     output<<endl;
+    // }
+    // output.close();
     string h_file = "result/outputH_" + to_string((int)round(t/dt)) + ".txt";
+    cout << h_file << endl;
     output.open(h_file, ios::app);
     output <<"time: " << t << endl;
     output << setprecision(16);

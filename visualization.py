@@ -2,19 +2,21 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import animation
 import numpy as np
+from matplotlib import cm
 
 
 def surface_plot3d(X, Y, eta, file_name):
     fig = plt.figure(figsize=(11, 7))
     ax = Axes3D(fig)
     surf = ax.plot_surface(X, Y, eta, rstride=1, cstride=1,
-                           cmap=plt.cm.jet, linewidth=0, antialiased=True)
+                           cmap=cm.coolwarm, linewidth=0, antialiased=True)
 
     ax.set_title("Mô tả bề mặt", fontname="serif", fontsize=17)
     ax.set_xlabel("x [m]", fontname="serif", fontsize=16)
     ax.set_ylabel("y [m]", fontname="serif", fontsize=16)
     ax.set_zlabel("Mô tả bề mặt [m]", fontname="serif", fontsize=16)
     plt.savefig(file_name)
+
     # plt.show()
     plt.close(fig)
 
@@ -53,16 +55,16 @@ if __name__ == '__main__':
     y = np.asarray([i for i in range(100)])
 
     x, y = np.meshgrid(x, y)
-    for i in range(19007, 19100, 10):
+    for i in range(0, 10010, 10):
         eta = []
-        file = open(f"result/outputH_{i}.txt")
+        file = open(f"/Users/macbookpro/Workspace/TTHNC/ShallowWater/result/outputH_{i}.txt")
         lines = file.readlines()[1:]
         for line in lines:
             tmp = [float(x) for x in line.split()]
             eta.append(tmp)
 
-        eta = np.asarray(eta)
+        eta = np.asarray(eta) - 1
         eta_list.append(eta)
 
-        # surface_plot3d(x, y, eta, f"img/H{i}.png")
-    eta_animation3d(x, y, eta_list, 1, "a")
+        surface_plot3d(x, y, eta, f"img/H{i}.png")
+    # eta_animation3d(x, y, eta_list, 1, "a")
