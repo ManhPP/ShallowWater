@@ -157,7 +157,7 @@ void writeResult(float *U, float *V, float *H, float t){
     //     output<<endl;
     // }
     // output.close();
-	string h_file = "result_mpi/outputH_mpi_" + to_string((int)round(t/dt)) + ".txt";
+	string h_file = "result_mpi/outputH_" + to_string((int)round(t/dt)) + ".txt";
     output.open(h_file, ios::out | ios::ate);
     output <<"time: " << t << endl;
     output << setprecision(16);
