@@ -70,11 +70,11 @@ int main(){
         }
 
         t += dt;
-        // step ++;
-        // if(step % 10 == 0)
-        writeResult(U, V, H, t);
+        step ++;
+        if(step % 10 == 0)
+            writeResult(U, V, H, t);
 
-        cout << t << '\n';
+        // cout << t << '\n';
     }
     writeResult(U, V, H, t);
 
@@ -194,7 +194,7 @@ void writeResult(float *U, float *V, float *H, float t){
             for (int i = 0; i < nx; i++){
                 float val = value(H, i, j);
                 // val = max(1.f, min(val, 0.f));
-                output<< val + H0 << " ";
+                output<< val << " ";
         }
         output<<endl;
     }
