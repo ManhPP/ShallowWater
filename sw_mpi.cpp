@@ -1,23 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 #include <math.h>
-#include <time.h>
-#include <mpi.h>
-#include <string.h>
 #include <fstream>
-#include <iomanip>
 #include <cstdio>
-
-using namespace std;
-
-#define BEGIN       1                  /* message tag */
-#define LTAG        2                  /* message tag */
-#define RTAG        3                  /* message tag */
-#define NONE        0                  /* indicates no neighbor */
-#define DONE        4                  /* message tag */
-#define MASTER      0                  /* taskid of first process */
+#include <iomanip>
+#include <mpi.h>
 
 #define PI 3.14159265f
+
 #define g 1.0f
 #define f 0.1f
 #define L 100.0f
@@ -30,8 +19,55 @@ using namespace std;
 #define H2 2660.0f
 #define D 4400000.0f
 
+using namespace std;
+
+
+void init(float *U, float *V, float *H); // ham khoi tao
+
+void writeResult(float *U, float *V, float *H, float t); // ham ghi ket qua ra file
+
 int nx = L/hx;
 int ny = L/hy;
+
+//=========================
+void truyenTren(float *Uu, float *Vv,float *Hh, float *Ud, float *Vd,float *Hd, int rank, int size){
+    MPI_Status stat;
+    int src = rank + 1;
+    int dst = rank - 1;
+    if(rank==0){
+        dst = size-1;
+
+    }
+    else if(rank == size-1){
+        src = 0;
+    }
+    MPI_Send(Uu, nx, MPI_FLOAT, dst, rank, MPI_COMM_WORLD);
+    MPI_Recv(Ud, nx, MPI_FLOAT, src, src, MPI_COMM_WORLD, &stat);
+    MPI_Send(Vv, nx, MPI_FLOAT, dst, rank, MPI_COMM_WORLD);
+    MPI_Recv(Vd, nx, MPI_FLOAT, src, src, MPI_COMM_WORLD, &stat);
+    MPI_Send(Hh, nx, MPI_FLOAT, dst, rank, MPI_COMM_WORLD);
+    MPI_Recv(Hd, nx, MPI_FLOAT, src, src, MPI_COMM_WORLD, &stat);
+}
+//=========================
+void truyenDuoi(float *Uu, float *Vv,float *Hh, float *Ut, float *Vt,float *Ht, int rank, int size){
+    MPI_Status stat;
+    int src = rank - 1;
+    int dst = rank + 1;
+
+    if(rank==0){
+        src = size - 1;
+    }
+    else if(rank == size-1){
+        dst = 0;
+    }
+    MPI_Send(Uu + (ny/size-1)*nx, nx, MPI_FLOAT, dst, rank, MPI_COMM_WORLD);
+    MPI_Recv(Ut, nx, MPI_FLOAT, src, src, MPI_COMM_WORLD, &stat);
+    MPI_Send(Vv + (ny/size-1)*nx, nx, MPI_FLOAT, dst, rank, MPI_COMM_WORLD);
+    MPI_Recv(Vt, nx, MPI_FLOAT, src, src, MPI_COMM_WORLD, &stat);
+    MPI_Send(Hh + (ny/size-1)*nx, nx, MPI_FLOAT, dst, rank, MPI_COMM_WORLD);
+    MPI_Recv(Ht, nx, MPI_FLOAT, src, src, MPI_COMM_WORLD, &stat);
+}
+//=========================
 
 int index(int i, int j){
     return j * nx + i;
@@ -48,17 +84,17 @@ float dx(const float* A, int i, int j) {
     return (r - l) / (2 * hx);
 }
 
-float dy(const float* A, int i, int j) {
-    float u = (j == ny-1) ? value(A, i, 0) : value(A, i, j+1);
-    float d = (j == 0) ? value(A, i, ny-1) : value(A, i, j-1);
+float dy(const float* A, int i, int j, float *At, float*Ad, int nyc) {
+    float u = (j == nyc-1) ? *(Ad + i): value(A, i, j+1);
+    float d = (j == 0) ? *(At + i) : value(A, i, j-1);
 
     return (u - d) / (2 * hy);
 }
 
-void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH, int b, int e){
+void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH, float *Ut, float *Vt, float *Ht, float *Ud, float *Vd, float *Hd, int nyc){
     // float Ux, Uy, Ur, Ud, Uc, Vx, Vy, Vr, Vd, Vc, Hc, Hd, Hr, Hx, Hy;
 
-    for (int j = b; j < e; j++){
+    for (int j = 0; j < nyc; j++){
             for (int i = 0; i < nx; i++){
             // Uc = value(U, i ,j);
             // Ur = (i == nx-1) ? value(U, 0, j) : value(U, i+1, j);
@@ -85,11 +121,11 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH, 
             // Hy = (Hd - Hc)/hy;
 
             float Ux = dx(U, i, j);
-            float Uy = dy(U, i, j);
+            float Uy = dy(U, i, j, Ut, Ud, nyc);
             float Vx = dx(V, i, j);
-            float Vy = dy(V, i, j);
+            float Vy = dy(V, i, j, Vt, Vd, nyc);
             float Hx = dx(H, i, j);
-            float Hy = dy(H, i, j);
+            float Hy = dy(H, i, j, Ht, Hd, nyc);
 
             // *(dU + index(i, j)) = f*Vc - Uc*Ux - Vc*Uy -g*Hx;
             // *(dV + index(i, j)) = -f*Uc - Uc*Vx - Vc*Vy - g*Hy;
@@ -97,22 +133,9 @@ void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH, 
 
             *(dU + index(i, j)) = - g * Hx;
             *(dV + index(i, j)) = - g * Hy;
-            // *(dH + index(i, j)) = - (Ux * value(H, i, j) + Hx * value(U, i, j) + Vy * value(H, i, j) + Hy * value(V, i, j)) ;
-			*(dH + index(i, j)) = - (Ux * value(H, i, j) + Vy * value(H, i, j)) ;
+            *(dH + index(i, j)) = - (Ux * value(H, i, j) + Vy * value(H, i, j));
         }
     }
-}
-
-void update(float *U, float *V, float *H, float *dU, float *dV, float *dH, int b, int e) {
-	calDerivate(U, V, H, dU, dV, dH, b, e);
-
-	for (int j = b; j < e; j++){
-		for (int i = 0; i < nx; i++){
-			*(U + index(i,j)) += dt*(value(dU, i, j));
-			*(V + index(i,j)) += dt*(value(dV, i, j));
-			*(H + index(i,j)) += dt*(value(dH, i, j));
-		}
-	}
 }
 
 void init(float *U, float *V, float *H){
@@ -133,8 +156,8 @@ void init(float *U, float *V, float *H){
 }
 
 void writeResult(float *U, float *V, float *H, float t){
-    fstream output;
-	// output.open("outputU_mpi.txt", ios::app);
+    std::fstream output;
+	// output.open("result/outputU.txt", ios::app);
     // output <<"time: " << t << endl;
     // output << setprecision(16);
 
@@ -146,7 +169,7 @@ void writeResult(float *U, float *V, float *H, float t){
     // }
     // output.close();
 
-    // output.open("outputV_mpi.txt", ios::app);
+    // output.open("result/outputV.txt", ios::app);
     // output <<"time: " << t << endl;
     // output << setprecision(16);
 
@@ -157,162 +180,108 @@ void writeResult(float *U, float *V, float *H, float t){
     //     output<<endl;
     // }
     // output.close();
-	string h_file = "result_mpi/outputH_" + to_string((int)round(t/dt)) + ".txt";
+
+    string h_file = "result_mpi/outputH_" + to_string((int)round(t/dt)) + ".txt";
     output.open(h_file, ios::out | ios::ate);
     output <<"time: " << t << endl;
-    output << setprecision(16);
+    output << setprecision(32);
 
     for (int j = 0; j < ny; j++){
             for (int i = 0; i < nx; i++){
-            output<<value(H, i, j) << " ";
+                float val = value(H, i, j);
+                // val = max(1.f, min(val, 0.f));
+                output<< val << " ";
         }
         output<<endl;
     }
     output.close();
 } // ham ghi ket qua ra file
 
-int main(int argc, char** argv) {
-	int id;
-	int numtasks;
-	float *U, *V, *H;
+
+int main(int argc, char **argv){
+    float *U, *V, *H;
     float *dU, *dV, *dH;
-	int i, it;
-	int numworkers;
-	int dst, src;
-	int left, right;
-	int avgnum, extra, offset;
-	int numele;
-	MPI_Status status;
+    float *Uu, *Vv, *Hh;
+    float *Ut, *Vt, *Ht;
+    float *Ud, *Vd, *Hd;
 
-	U = (float *) malloc ((nx*ny)*sizeof(float));
-    V = (float *) malloc ((nx*ny)*sizeof(float));
-    H = (float *) malloc ((nx*ny)*sizeof(float));
+    float t = 0;
+    int rank, size;
 
-    dU = (float *) malloc ((nx*ny)*sizeof(float));
-    dV = (float *) malloc ((nx*ny)*sizeof(float));
-    dH = (float *) malloc ((nx*ny)*sizeof(float));
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Status stat;
 
-	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
-	MPI_Comm_rank(MPI_COMM_WORLD, &id);
-	numworkers = numtasks - 1;
+    int nyc = ny/size;
+    if (rank == 0){
+        U= (float *) malloc ((nx*ny)*sizeof(float));
+        V= (float *) malloc ((nx*ny)*sizeof(float));
+        H= (float *) malloc ((nx*ny)*sizeof(float));
 
-	if (id == MASTER) {
-		init(U, V, H);
-		writeResult(U, V, H, 0);
-		avgnum = nx / numworkers;
-		extra = nx % numworkers;
-		offset = 0;
+        init(U, V, H);
+    }
+    int step = 0;
+    Uu= (float *) malloc ((nx*nyc)*sizeof(float));
+    Vv= (float *) malloc ((nx*nyc)*sizeof(float));
+    Hh= (float *) malloc ((nx*nyc)*sizeof(float));
+    dU= (float *) malloc ((nx*nyc)*sizeof(float));
+    dV= (float *) malloc ((nx*nyc)*sizeof(float));
+    dH= (float *) malloc ((nx*nyc)*sizeof(float));
+    
+    Ut= (float *) malloc ((nx)*sizeof(float));
+    Vt= (float *) malloc ((nx)*sizeof(float));
+    Ht= (float *) malloc ((nx)*sizeof(float));
 
-		for (i = 1; i <= numworkers; i++) {
-			numele = (i <= extra) ? avgnum + 1 : avgnum;
-			numele *= ny;
-			left = (i == 1) ? NONE : i - 1;
-			right = (i == numworkers) ? NONE : i + 1;
+    Ud= (float *) malloc ((nx)*sizeof(float));
+    Vd= (float *) malloc ((nx)*sizeof(float));
+    Hd= (float *) malloc ((nx)*sizeof(float));
 
-			dst = i;
-			MPI_Send(&offset, 1, MPI_INT, dst, BEGIN, MPI_COMM_WORLD);
-			MPI_Send(&numele, 1, MPI_INT, dst, BEGIN, MPI_COMM_WORLD);
-			MPI_Send(&left, 1, MPI_INT, dst, BEGIN, MPI_COMM_WORLD);
-			MPI_Send(&right, 1, MPI_INT, dst, BEGIN, MPI_COMM_WORLD);
-			MPI_Send(&U[offset], numele, MPI_FLOAT, dst, BEGIN, MPI_COMM_WORLD);
-			MPI_Send(&V[offset], numele, MPI_FLOAT, dst, BEGIN, MPI_COMM_WORLD);
-			MPI_Send(&H[offset], numele, MPI_FLOAT, dst, BEGIN, MPI_COMM_WORLD);
 
-			offset = offset + numele;
-		}
+    MPI_Scatter(U, nx*nyc, MPI_FLOAT, Uu, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(V, nx*nyc, MPI_FLOAT, Vv, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(H, nx*nyc, MPI_FLOAT, Hh, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-		float t = 0.0;
-		int step = 0;
+    if (rank == 0){
+        writeResult(U, V, H, t);
+    }
 
-		while(t <= T) {
-			for (i = 1; i <= numworkers; i++) {
-				src = i;
-				MPI_Recv(&offset, 1, MPI_INT, src, DONE, MPI_COMM_WORLD, &status);
-				MPI_Recv(&numele, 1, MPI_INT, src, DONE, MPI_COMM_WORLD, &status);
-				MPI_Recv(&U[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
-				MPI_Recv(&V[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
-				MPI_Recv(&H[offset], numele, MPI_FLOAT, src, DONE, MPI_COMM_WORLD, &status);
-			}
+    while (t <= T)
+    {
+        truyenDuoi(Uu, Vv, Hh, Ut, Vt, Ht, rank, size);
+        truyenTren(Uu, Vv, Hh, Ud, Vd, Hd, rank, size);
+        MPI_Barrier(MPI_COMM_WORLD);
+        calDerivate(Uu, Vv, Hh, dU, dV, dH, Ut, Vt, Ht, Ud, Vd, Hd, nyc);
+        for (int j = 0; j < nyc; j++){
+            for (int i = 0; i < nx; i++){
+                *(Uu + index(i,j)) += dt*(value(dU, i, j));
+                *(Vv + index(i,j)) += dt*(value(dV, i, j));
+                *(Hh + index(i,j)) += dt*(value(dH, i, j));
+            }
+        }
+        step ++;
+        t += dt;
 
-			t += dt;
-			step++;
+        if (step % 10 == 0){
+            MPI_Gather(Uu, nx*nyc, MPI_FLOAT, U, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+            MPI_Gather(Vv, nx*nyc, MPI_FLOAT, V, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+            MPI_Gather(Hh, nx*nyc, MPI_FLOAT, H, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+            
+            if (rank == 0){
+                writeResult(U, V, H, t);
+            }
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 
-			if(step % 10 == 0)
-				writeResult(U, V, H, t); // currently write only last result
-		}
-		
-	}
+    MPI_Gather(Uu, nx*nyc, MPI_FLOAT, U, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(Vv, nx*nyc, MPI_FLOAT, V, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Gather(Hh, nx*nyc, MPI_FLOAT, H, nx*nyc, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    if(rank==0){
+        writeResult(U, V, H, t);
+    }
 
-	if (id != MASTER) {
-		src = MASTER;
+    MPI_Finalize();
 
-		MPI_Recv(&offset, 1, MPI_INT, src, BEGIN, MPI_COMM_WORLD, &status);
-		MPI_Recv(&numele, 1, MPI_INT, src, BEGIN, MPI_COMM_WORLD, &status);
-		MPI_Recv(&left, 1, MPI_INT, src, BEGIN, MPI_COMM_WORLD, &status);
-		MPI_Recv(&right, 1, MPI_INT, src, BEGIN, MPI_COMM_WORLD, &status);
-		MPI_Recv(&U[offset], numele, MPI_FLOAT, src, BEGIN, MPI_COMM_WORLD, &status);
-		MPI_Recv(&V[offset], numele, MPI_FLOAT, src, BEGIN, MPI_COMM_WORLD, &status);
-		MPI_Recv(&H[offset], numele, MPI_FLOAT, src, BEGIN, MPI_COMM_WORLD, &status);
-
-		//printf("id = %d, offset = %d, numele = %d, left = %d, right = %d\n", id, offset, numele, left, right);
-		//display(C, offset, offset + (int)numele/n);
-
-		float t = 0.0;
-		while(t <= T) {
-			if (left != NONE) {
-				MPI_Send(&U[offset], ny, MPI_FLOAT, left, RTAG, MPI_COMM_WORLD);
-				MPI_Send(&V[offset], ny, MPI_FLOAT, left, RTAG, MPI_COMM_WORLD);
-				MPI_Send(&H[offset], ny, MPI_FLOAT, left, RTAG, MPI_COMM_WORLD);
-				MPI_Send(&dU[offset], ny, MPI_FLOAT, left, RTAG, MPI_COMM_WORLD);
-				MPI_Send(&dV[offset], ny, MPI_FLOAT, left, RTAG, MPI_COMM_WORLD);
-				MPI_Send(&dH[offset], ny, MPI_FLOAT, left, RTAG, MPI_COMM_WORLD);
-
-				src = left;
-				MPI_Recv(&U[offset - ny], ny, MPI_FLOAT, src, LTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&V[offset - ny], ny, MPI_FLOAT, src, LTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&H[offset - ny], ny, MPI_FLOAT, src, LTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&dU[offset - ny], ny, MPI_FLOAT, src, LTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&dV[offset - ny], ny, MPI_FLOAT, src, LTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&dH[offset - ny], ny, MPI_FLOAT, src, LTAG, MPI_COMM_WORLD, &status);
-			}
-
-			if (right != NONE) {
-				MPI_Send(&U[offset + numele - ny], ny, MPI_FLOAT, right, LTAG, MPI_COMM_WORLD);
-				MPI_Send(&V[offset + numele - ny], ny, MPI_FLOAT, right, LTAG, MPI_COMM_WORLD);
-				MPI_Send(&H[offset + numele - ny], ny, MPI_FLOAT, right, LTAG, MPI_COMM_WORLD);
-				MPI_Send(&dU[offset + numele - ny], ny, MPI_FLOAT, right, LTAG, MPI_COMM_WORLD);
-				MPI_Send(&dV[offset + numele - ny], ny, MPI_FLOAT, right, LTAG, MPI_COMM_WORLD);
-				MPI_Send(&dH[offset + numele - ny], ny, MPI_FLOAT, right, LTAG, MPI_COMM_WORLD);
-
-				src = right;
-				MPI_Recv(&U[offset + numele], ny, MPI_FLOAT, src, RTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&V[offset + numele], ny, MPI_FLOAT, src, RTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&H[offset + numele], ny, MPI_FLOAT, src, RTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&dU[offset + numele], ny, MPI_FLOAT, src, RTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&dV[offset + numele], ny, MPI_FLOAT, src, RTAG, MPI_COMM_WORLD, &status);
-				MPI_Recv(&dH[offset + numele], ny, MPI_FLOAT, src, RTAG, MPI_COMM_WORLD, &status);
-			}
-
-			update(U, V, H, dU, dV, dH, offset/ny, (int)((offset + numele)/ny));
-
-			MPI_Send(&offset, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
-			MPI_Send(&numele, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
-			MPI_Send(&U[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
-			MPI_Send(&V[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
-			MPI_Send(&H[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
-
-			t += dt;
-		}
-
-		// MPI_Send(&offset, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
-		// MPI_Send(&numele, 1, MPI_INT, MASTER, DONE, MPI_COMM_WORLD);
-		// MPI_Send(&U[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
-		// MPI_Send(&V[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
-		// MPI_Send(&H[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
-
-	}
-	MPI_Finalize();
-
-	return 0;
+    return 0;
 }

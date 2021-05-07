@@ -1,19 +1,18 @@
-#include<iostream>
-#include<math.h>
+#include <iostream>
+#include <math.h>
 #include <fstream>
-#include <iomanip>
 #include <cstdio>
+#include <iomanip>
 
 #define PI 3.14159265f
 
-#define g 9.8f
+#define g 1.0f
 #define f 0.1f
-#define L 10.0f
-#define hx 0.1f
-#define hy 0.1f
-#define T 1.0f
-#define dt 0.1f
-
+#define L 100.0f
+#define hx 1.0f
+#define hy 1.0f
+#define T 100.0f
+#define dt 0.01f
 #define H0 20000.0f
 #define H1 4400.0f
 #define H2 2660.0f
@@ -34,7 +33,7 @@ int index(int i, int j){
     return j * nx + i;
 }
 
-float value(float *A, int i, int j){
+float value(const float *A, int i, int j){
     return *(A + index(i, j));
 }
 
@@ -57,6 +56,7 @@ int main(){
 
     init(U, V, H);
     writeResult(U, V, H, t);
+    int step = 0;
 
     while (t <= T)
     {
@@ -70,103 +70,131 @@ int main(){
         }
 
         t += dt;
-        writeResult(U, V, H, t);
+        step ++;
+        if(step % 10 == 0)
+            writeResult(U, V, H, t);
+
+        // cout << t << '\n';
     }
     writeResult(U, V, H, t);
 
     return 0;
 }
 
+float dx(const float* A, int i, int j) {
+    float r = (i == nx-1) ? value(A, 0, j) : value(A, i+1, j);
+    float l = (i == 0) ? value(A, nx-1, j) : value(A, i-1, j);
+
+    return (r - l) / (2 * hx);
+}
+
+float dy(const float* A, int i, int j) {
+    float u = (j == ny-1) ? value(A, i, 0) : value(A, i, j+1);
+    float d = (j == 0) ? value(A, i, ny-1) : value(A, i, j-1);
+
+    return (u - d) / (2 * hy);
+}
+
 void calDerivate(float* U, float* V, float* H, float *dU, float *dV, float *dH){
-    float Ux, Uy, Ur, Ud, Uc, Vx, Vy, Vr, Vd, Vc, Hc, Hd, Hr, Hx, Hy;
+    // float Ux, Uy, Ur, Ud, Uc, Vx, Vy, Vr, Vd, Vc, Hc, Hd, Hr, Hx, Hy;
 
     for (int j = 0; j < ny; j++){
             for (int i = 0; i < nx; i++){
-            Uc = value(U, i ,j);
-            Ur = (i == nx-1) ? value(U, 0, j) : value(U, i+1, j);
-            Ud = (j == ny-1) ? 0.0 : value(U, i, j+1);
+            // Uc = value(U, i ,j);
+            // Ur = (i == nx-1) ? value(U, 0, j) : value(U, i+1, j);
+            // Ud = (j == ny-1) ? value(U, i, 0) : value(U, i, j+1);
+            // // Ud = (j == ny-1) ? 0 : value(U, i, j+1);
 
-            Vc = value(V, i,j);
-            Vr = (i == nx-1) ? value(V, 0, j) : value(V, i+1, j);
-            Vd = (j == ny-1) ? 0.0 : value(V, i, j+1);
+            // Vc = value(V, i,j);
+            // Vr = (i == nx-1) ? value(V, 0, j) : value(V, i+1, j);
+            // Vd = (j == ny-1) ? value(V, i, 0) : value(V, i, j+1);
+            // // Vd = (j == ny-1) ? 0 : value(V, i, j+1);
 
-            Hc = value(H, i, j);
-            Hr = (i == nx-1) ? value(H, 0, j) : value(H, i+1, j);
-            Hd = (j == ny-1) ? 0.0 : value(H, i, j+1);
+            // Hc = value(H, i, j);
+            // Hr = (i == nx-1) ? value(H, 0, j) : value(H, i+1, j);
+            // Hd = (j == ny-1) ? value(H, i, 0) : value(H, i, j+1);
+            // // Hd = (j == ny-1) ? 0 : value(H, i, j+1);
 
-            Ux = (Ur - Uc)/hx;
-            Uy = (Ud - Uc)/hy;
+            // Ux = (Ur - Uc)/hx;
+            // Uy = (Ud - Uc)/hy;
 
-            Vx = (Vr - Vc)/hx;
-            Vy = (Vd - Vc)/hy;
+            // Vx = (Vr - Vc)/hx;
+            // Vy = (Vd - Vc)/hy;
 
-            Hx = (Hr - Hc)/hx;
-            Hy = (Hd - Hc)/hy;
+            // Hx = (Hr - Hc)/hx;
+            // Hy = (Hd - Hc)/hy;
 
-            *(dU + index(i, j)) = f*Vc - Uc*Ux - Vc*Uy -g*Hx;
-            *(dV + index(i, j)) = -f*Uc - Uc*Vx - Vc*Vy - g*Hy;
-            *(dH + index(i, j)) = -Uc*Hx - Hc*Ux - Vc*Hy - Hc*Vy;
+            float Ux = dx(U, i, j);
+            float Uy = dy(U, i, j);
+            float Vx = dx(V, i, j);
+            float Vy = dy(V, i, j);
+            float Hx = dx(H, i, j);
+            float Hy = dy(H, i, j);
+
+            // *(dU + index(i, j)) = f*Vc - Uc*Ux - Vc*Uy -g*Hx;
+            // *(dV + index(i, j)) = -f*Uc - Uc*Vx - Vc*Vy - g*Hy;
+            // *(dH + index(i, j)) = -Uc*Hx - Hc*Ux - Vc*Hy - Hc*Vy;
+
+            *(dU + index(i, j)) = - g * Hx;
+            *(dV + index(i, j)) = - g * Hy;
+            *(dH + index(i, j)) = - (Ux * value(H, i, j) + Vy * value(H, i, j));
         }
     }
-} // ham tinh dao ham theo t
+}
 
 void init(float *U, float *V, float *H){
     float Hc, Hd, Hr, Hx, Hy;
     for (int j = 0; j < ny; j++){
             for (int i = 0; i < nx; i++){
-            *(H + index(i, j)) = H0 
-                                + H1*tan(9*(j*hy - 6*hx)/(2*D)) 
-                                + H2*sin(2*PI*i*hx)/pow(cos((9*j*hy - 6*hx)/D), 2);
+            *(H + index(i, j)) = 1.0;
         }
     }
+    *(H+index(nx/2, ny/2)) = 1.3;
+
     for (int j = 0; j < ny; j++){
             for (int i = 0; i < nx; i++){
-            Hc = value(H, i, j);
-            Hr = (i == nx-1) ? value(H, 0, j) : value(H, i+1, j);
-            Hd = (j == ny-1) ? 0 : value(H, i, j+1);
-
-            Hx = (Hr - Hc)/hx;
-            Hy = (Hd - Hc)/hy;
-
-            *(U + index(i, j)) = -Hy/f;
-            *(V + index(i, j)) = -Hx/f;
+            *(U + index(i, j)) = 0;
+            *(V + index(i, j)) = 0;
         }
     }
-} // ham khoi tao
+}
 
 void writeResult(float *U, float *V, float *H, float t){
-    fstream output;
-	output.open("outputU.txt", ios::app);
+    std::fstream output;
+	// output.open("result/outputU.txt", ios::app);
+    // output <<"time: " << t << endl;
+    // output << setprecision(16);
+
+    // for (int j = 0; j < ny; j++){
+    //         for (int i = 0; i < nx; i++){
+    //         output<<value(U, i, j) << " ";
+    //     }
+    //     output<<endl;
+    // }
+    // output.close();
+
+    // output.open("result/outputV.txt", ios::app);
+    // output <<"time: " << t << endl;
+    // output << setprecision(16);
+
+    // for (int j = 0; j < ny; j++){
+    //         for (int i = 0; i < nx; i++){
+    //         output<<value(V, i, j) << " ";
+    //     }
+    //     output<<endl;
+    // }
+    // output.close();
+
+    string h_file = "result/outputH_" + to_string((int)round(t/dt)) + ".txt";
+    output.open(h_file, ios::out | ios::ate);
     output <<"time: " << t << endl;
-    output << setprecision(16);
+    output << setprecision(32);
 
     for (int j = 0; j < ny; j++){
             for (int i = 0; i < nx; i++){
-            output<<value(U, i, j) << " ";
-        }
-        output<<endl;
-    }
-    output.close();
-
-    output.open("outputV.txt", ios::app);
-    output <<"time: " << t << endl;
-    output << setprecision(16);
-
-    for (int j = 0; j < ny; j++){
-            for (int i = 0; i < nx; i++){
-            output<<value(V, i, j) << " ";
-        }
-        output<<endl;
-    }
-    output.close();
-
-    output.open("outputH.txt", ios::app);
-    output <<"time: " << t << endl;
-    output << setprecision(16);
-
-    for (int j = 0; j < ny; j++){
-            for (int i = 0; i < nx; i++){
-            output<<value(H, i, j) << " ";
+                float val = value(H, i, j);
+                // val = max(1.f, min(val, 0.f));
+                output<< val << " ";
         }
         output<<endl;
     }

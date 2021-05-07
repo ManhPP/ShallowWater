@@ -68,4 +68,20 @@ if __name__ == '__main__':
 
         if i in [0, 10, 100, 1000, 10000]:
             surface_plot3d(x, y, eta, f"img/H{i}.png", i)
-    eta_animation3d(x, y, eta_list, 10, "a")
+    eta_animation3d(x, y, eta_list, 10, "h")
+
+
+    for i in range(0, 10001, 10):
+        eta = []
+        file = open(f"/Users/macbookpro/Workspace/TTHNC/ShallowWater/result_mpi/outputH_{i}.txt")
+        lines = file.readlines()[1:]
+        for line in lines:
+            tmp = [float(x) for x in line.split()]
+            eta.append(tmp)
+
+        eta = np.asarray(eta) - 1
+        eta_list.append(eta)
+
+        if i in [0, 10, 100, 1000, 10000]:
+            surface_plot3d(x, y, eta, f"img/H_mpi_{i}.png", i)
+    eta_animation3d(x, y, eta_list, 10, "h_mpi")
