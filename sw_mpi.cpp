@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
 
 	if (id == MASTER) {
 		init(U, V, H);
-
+		writeResult(U, V, H, 0);
 		avgnum = nx / numworkers;
 		extra = nx % numworkers;
 		offset = 0;
@@ -242,7 +242,6 @@ int main(int argc, char** argv) {
 				writeResult(U, V, H, t); // currently write only last result
 		}
 		
-		MPI_Finalize();
 	}
 
 	if (id != MASTER) {
@@ -312,8 +311,8 @@ int main(int argc, char** argv) {
 		// MPI_Send(&V[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
 		// MPI_Send(&H[offset], numele, MPI_FLOAT, MASTER, DONE, MPI_COMM_WORLD);
 
-		MPI_Finalize();
 	}
+	MPI_Finalize();
 
 	return 0;
 }
